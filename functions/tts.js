@@ -11,9 +11,19 @@ export async function handler(event) {
       body: JSON.stringify({
         model: "playai-tts",
         input: text,
-        voice: "alloy"
+        voice: "alloy",
+        format: "mp3"   // ✅ IMPORTANT
       })
     });
+
+    // ❗ अगर API error दे तो detect करो
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        statusCode: 500,
+        body: errorText
+      };
+    }
 
     const audioBuffer = await response.arrayBuffer();
 
