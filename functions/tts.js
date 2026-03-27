@@ -2,6 +2,13 @@ export async function handler(event) {
   try {
     const { text } = JSON.parse(event.body);
 
+    if (!text) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Text is required" })
+      };
+    }
+
     const response = await fetch("https://api.groq.com/openai/v1/audio/speech", {
       method: "POST",
       headers: {
@@ -11,14 +18,16 @@ export async function handler(event) {
       body: JSON.stringify({
         model: "playai-tts",
         input: text,
-        voice: "alloy",
-        format: "mp3"   // ✅ IMPORTANT
+        voice: "alloy"
+        // ❌ format हटाया गया
       })
     });
 
-    // ❗ अगर API error दे तो detect करो
+    // ❗ API error handling
     if (!response.ok) {
       const errorText = await response.text();
+      console.error("Groq API Error:", errorText);
+
       return {
         statusCode: 500,
         body: errorText
@@ -30,6 +39,7 @@ export async function handler(event) {
     return {
       statusCode: 200,
       headers: {
+        // ✅ safer generic type (auto detect)
         "Content-Type": "audio/mpeg"
       },
       body: Buffer.from(audioBuffer).toString("base64"),
@@ -37,6 +47,8 @@ export async function handler(event) {
     };
 
   } catch (err) {
+    console.error("Server Error:", err);
+
     return {
       statusCode: 500,
       body: JSON.stringify({ error: err.message })
